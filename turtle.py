@@ -14,72 +14,63 @@ class Turtle:
         self.y = window_y / 2
         self.angle = 90
         self.angle_radians = math.radians(self.angle)
-        self.point_start = []
-        self.point_end = []
-        self.line_color = []
+        self.lines_start_list = []
+        self.lines_end_list = []
         self.is_pen_up = False
-        self.is_visible = True
+        self.draw_turtle_object = True
         self.screen = pygame.display.set_mode((window_x, window_y))
         self.image = None
-        self.imageRect = None
+        self.image_rect = None
         self.set_turtle_image(pygame.image.load("turtle.png"))
 
+    def draw(self):
+        self.screen.fill(background_color)
+        if self.draw_turtle_object:
+            self.screen.blit(self.image, self.image_rect)
+        if self.lines_start_list is not None:
+            for start_point_x, start_point_y in zip(self.lines_start_list, self.lines_end_list):
+                pygame.draw.line(self.screen, (0, 0, 0), start_point_x, start_point_y, 2)
+
+    def set_turtle_image(self, image):
+
+        self.image = image
+        self.image_rect = image.get_rect()
+        self.image_rect = self.image_rect.move([self.x, self.y])
+        self.x = self.image_rect.centerx
+        self.y = self.image_rect.centery
+
+    def rotate(self, angle):
+        self.angle += angle
+        self.angle_radians = math.radians(self.angle)
+
+    def move(self, distance, turn):
+        if self.is_pen_up is False:
+            self.lines_start_list.append((self.x, self.y))
+
+        self.image_rect = self.image_rect.move(
+            [turn * int(distance * math.cos(self.angle_radians)),
+             int(turn * -distance * math.sin(self.angle_radians))])
+
+        self.x = self.image_rect.centerx
+        self.y = self.image_rect.centery
+
+        if self.is_pen_up is False:
+            self.lines_end_list.append((self.x, self.y))
+
+    def move_forward(self, distance):
+        self.move(distance, 1)
+
+    def move_backward(self, distance):
+        self.move(distance, -1)
+
     def hide_turtle(self):
-        self.is_visible = False
+        self.draw_turtle_object = False
 
     def show_turtle(self):
-        self.is_visible = True
+        self.draw_turtle_object = True
 
     def pen_up(self):
         self.is_pen_up = True
 
     def pen_down(self):
         self.is_pen_up = False
-
-    def draw(self):
-        self.screen.fill(background_color)
-        if self.is_visible:
-            self.screen.blit(self.image, self.imageRect)
-        if self.point_start is not None:
-            for px, py, pc in zip(self.point_start, self.point_end, self.line_color):
-                pygame.draw.line(self.screen, pc, px, py, 2)
-
-    def set_turtle_image(self, image):
-
-        self.image = image
-        self.imageRect = image.get_rect()
-        self.imageRect = self.imageRect.move([self.x, self.y])
-        self.x = self.imageRect.centerx
-        self.y = self.imageRect.centery
-
-    def rotate(self, angle):
-        self.angle += angle
-        self.angle_radians = math.radians(self.angle)
-
-    def mv_forward(self, distance):
-
-        if self.is_pen_up is False:
-            self.point_start.append((self.x, self.y))
-            self.line_color.append((0, 0, 0))
-
-        self.imageRect = self.imageRect.move(
-            [int(distance * math.cos(self.angle_radians)), int(-distance * math.sin(self.angle_radians))])
-        self.x = self.imageRect.centerx
-        self.y = self.imageRect.centery
-
-        if self.is_pen_up is False:
-            self.point_end.append((self.x, self.y))
-
-    def move_backward(self, distance):
-
-        if self.is_pen_up is False:
-            self.point_start.append((self.x, self.y))
-            self.line_color.append((0, 0, 0))
-
-        self.imageRect = self.imageRect.move(
-            [-int(distance * math.cos(self.angle_radians)), int(distance * math.sin(self.angle_radians))])
-        self.x = self.imageRect.centerx
-        self.y = self.imageRect.centery
-
-        if self.is_pen_up is False:
-            self.point_end.append((self.x, self.y))

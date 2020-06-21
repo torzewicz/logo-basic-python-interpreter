@@ -1,7 +1,7 @@
 from logo_parser import LogoParser
 
 if __name__ == '__main__':
-	print("Type commands : ")
+	print("Type Command: ")
 	interpreter = LogoParser()
 	while True:
 		user_input = input().lower()
