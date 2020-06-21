@@ -1,15 +1,10 @@
 from logo_parser import LogoParser
 
-print("Type commands : ")
-source = " "
-P = LogoParser(source)
-P.graphInit()
-while True:
-	source = input()
-	if source == "exit" :
-		break
-	source = source + "  "
-	P.reInit(source)
-	P.parse()
-
-print(P.history)
+if __name__ == '__main__':
+	print("Type commands : ")
+	interpreter = LogoParser()
+	while True:
+		user_input = input().lower()
+		if user_input == "exit":
+			break
+		interpreter.apply_user_input(user_input + " ")

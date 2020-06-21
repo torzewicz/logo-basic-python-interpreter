@@ -1,174 +1,133 @@
+import pygame
+import sys
+
+from logo_keywords import Keyword
+from typecreator import TypeCreator
 from turtle import Turtle
-
-from keyword import Keyword
-from tokenizer import Tokenizer
-import sys, pygame
-
-background_color = (169, 169, 169)
 
 
 class LogoParser:
 
-    def __init__(self, source):
-        self.T = Tokenizer(source)
-        self.tokenList = []
-        self.createTokenList()
-        self.dispTokenList()
+    def __init__(self):
+        self.token_list = []
         self.index = -1
-        self.history = []
+        self.turtle = None
+        self.logo_init()
 
-    def reInit(self, source):
-        self.T = Tokenizer(source)
-        self.tokenList = []
-        self.createTokenList()
-        self.dispTokenList()
+    def apply_user_input(self, source):
+        self.token_list = []
+        self.fill_token_list(source)
         self.index = -1
-        self.history = []
+        self.parse()
 
-    def createTokenList(self):
-
-        # print "TOKENIZER STEP"
+    def fill_token_list(self, source):
+        type_creator = TypeCreator(source)
         while True:
-            token = self.T.getToken()
+            token = type_creator.get_token()
             if token is not None:
-                token.display()
-                self.tokenList.append(token)
+                self.token_list.append(token)
                 if token.type == 'Eof':
                     break
 
-        # raw_input()
-
-    def dispTokenList(self):
-        for token in self.tokenList:
-            token.display()
-
-    def lookNextToken(self):
-        try:
-            return self.tokenList[self.index + 1]
-        except IndexError as e:
+    def check_next_token(self):
+        if self.index + 1 < len(self.token_list):
+            return self.token_list[self.index + 1]
+        else:
             return None
 
-    def currToken(self):
-        return self.tokenList[self.index]
+    def get_current_token(self):
+        return self.token_list[self.index]
 
-    def getNextToken(self):
+    def get_next_token(self):
         self.index += 1
-        return self.tokenList[self.index]
+        return self.token_list[self.index]
 
-    def graphInit(self):
+    def logo_init(self):
         pygame.init()
-
-        window_x = 600
-        window_y = 600
-        self.screen = pygame.display.set_mode((window_x, window_y))
-
-        self.Turtle = Turtle(window_x, window_y)
-        # self.Turtle.setImage(pygame.image.load("turtle.png"))
-
-        self.screen.fill(background_color)
-        self.Turtle.draw(self.screen)
+        self.turtle = Turtle()
+        self.turtle.draw()
         pygame.display.flip()
-        pygame.display.set_icon(pygame.image.load("turtle.png"))
-        pygame.display.set_caption(" Turtle")
+        pygame.display.set_caption("Logo")
 
     def parse(self):
 
-        self.parseSentence()
-        while True:
-            tokenAhead = self.lookNextToken()
-            if tokenAhead == None:
-                break
-            elif tokenAhead.type == 'Eof':
-                break
-            elif tokenAhead.type == 'Keyword':
-                self.parseSentence()
-            else:
-                break
+        self.parse_characters()
+        token_ahead = self.check_next_token()
+        while token_ahead is not None and token_ahead.type == 'Keyword':
+            self.parse_characters()
+            token_ahead = self.check_next_token()
 
-    def parseSentence(self):
+    def parse_characters(self):
 
-        # parsing
-        nextToken = self.lookNextToken()
-        if nextToken.value not in [e.value for e in Keyword]:
-            print("Invalid input")
+        next_token = self.check_next_token()
+        if next_token is None or next_token.value not in [e.value for e in Keyword]:
+            print("Incorrect input")
             return
-        if nextToken.value in ['fd', 'bk', 'rt', 'lt']:
-            self.Match()
-            if (self.matches_numeric() == -1):
+
+        if next_token.value in ['fd', 'bk', 'rt', 'lt']:
+            self.shift_and_match()
+            if self.shift_matching_numeric() is False:
                 return
 
-            # graphics
-            if nextToken.value == 'fd':
-                self.Turtle.mvForward(int(self.currToken().value), self.screen)
-            if nextToken.value == 'bk':
-                self.Turtle.mvBackward(int(self.currToken().value), self.screen)
-            if nextToken.value == 'lt':
-                self.Turtle.rotate(int(self.currToken().value))
-            if nextToken.value == 'rt':
-                self.Turtle.rotate(int(-1 * int(self.currToken().value)))
+            if next_token.value == 'fd':
+                self.turtle.mv_forward(int(self.get_current_token().value))
+            if next_token.value == 'bk':
+                self.turtle.move_backward(int(self.get_current_token().value))
+            if next_token.value == 'lt':
+                self.turtle.rotate(int(self.get_current_token().value))
+            if next_token.value == 'rt':
+                self.turtle.rotate(int(-1 * int(self.get_current_token().value)))
 
-            self.history.append((nextToken.value, self.currToken().value))
+        if next_token.value in ['pu', 'pd', 'ht', 'st']:
+            self.shift_and_match()
 
-        if nextToken.value in ['pu', 'pd', 'ht', 'st', 'penerase']:
-            self.Match()
-            if nextToken.value == 'pu':
-                self.Turtle.penUp()
-            if nextToken.value == 'pd':
-                self.Turtle.penDown()
-            if nextToken.value == 'st':
-                self.Turtle.showTurtle()
-            if nextToken.value == 'ht':
-                self.Turtle.hideTurtle()
-            self.history.append(nextToken.value)
+            if next_token.value == 'pu':
+                self.turtle.pen_up()
+            if next_token.value == 'pd':
+                self.turtle.pen_down()
+            if next_token.value == 'st':
+                self.turtle.show_turtle()
+            if next_token.value == 'ht':
+                self.turtle.hide_turtle()
 
-        if nextToken.value in ['setcolor']:
-            self.Match()
-            try:
-                # self.Match(NUMERIC)
-                self.matches_numeric()
-                red = int(self.currToken().value)
-                # self.Match(NUMERIC)
-                self.matches_numeric()
-                green = int(self.currToken().value)
-                # self.Match(NUMERIC)
-                self.matches_numeric()
-                blue = int(self.currToken().value)
-                self.Turtle.setPenColor(red, green, blue)
-                self.history.append((nextToken.value, red, green, blue))
-            except ValueError as e:
-                print(e)
-        if nextToken.value in ['repeat']:
-            self.Match()
-            # self.Match(NUMERIC)
-            self.matches_numeric()
+        if next_token.value in ['repeat']:
+            self.shift_and_match()
+            if self.shift_matching_numeric() is False:
+                return
 
-            timesToLoop = int(self.currToken().value)
+            times = int(self.get_current_token().value)
 
-            self.Match('[')
-            savedIndex = self.index
-            for i in range(0, timesToLoop):
+            if self.shift_and_match('[') is False:
+                return
+            go_back_and_repeat_index = self.index
+            for i in range(0, times):
                 self.parse()
-                if i != timesToLoop - 1:
-                    self.index = savedIndex
-            self.Match(']')
+                if i != times - 1:
+                    self.index = go_back_and_repeat_index
+            if self.shift_and_match(']') is False:
+                return
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
-        self.screen.fill(background_color)
-        self.Turtle.draw(self.screen)
+
+        self.turtle.draw()
         pygame.display.flip()
 
-    def matches_numeric(self):
-        token = self.getNextToken()
+    def shift_matching_numeric(self):
+
+        token = self.get_next_token()
         if not token.value.isnumeric():
             print("Expected numeric but got " + token.type)
-            return -1
+            return False
+        else:
+            return True
 
-    def Match(self, expectedTokenType=None):
-        token = self.getNextToken()
-        if (expectedTokenType == None):
-            return
-        if (token.type != expectedTokenType):
-            print("Expected token type " + expectedTokenType + " but got " + token.type)
-            return -1
+    def shift_and_match(self, expected_token_type=None):
+
+        token = self.get_next_token()
+        if expected_token_type is None:
+            return True
+        if token.type != expected_token_type:
+            print("Expected token type " + expected_token_type + " but got " + token.type)
+            return False

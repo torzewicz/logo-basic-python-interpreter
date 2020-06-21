@@ -1,55 +1,52 @@
 import pygame
 import math
 
-WINDOWX = 500
-WINDOWY = 500
+background_color = (169, 169, 169)
 
-# TURTLE PROPERTIES
-TURTLE_WIDTH = 25
-TURTLE_HEIGHT = 25
+window_x = 600
+window_y = 600
 
 
 class Turtle:
 
-    def __init__(self, mainx, mainy):
-        self.x = mainx / 2
-        self.y = mainy / 2
+    def __init__(self):
+        self.x = window_x / 2
+        self.y = window_y / 2
         self.angle = 90
-        self.angleRad = math.radians(self.angle)
-        self.pointStart = []
-        self.pointEnd = []
-        self.lineColor = []
-        self.isPenUp = False
-        self.isVisible = True
-        self.penColor = (0, 0, 0)
-        self.setImage(pygame.image.load("turtle.png"))
+        self.angle_radians = math.radians(self.angle)
+        self.point_start = []
+        self.point_end = []
+        self.line_color = []
+        self.is_pen_up = False
+        self.is_visible = True
+        self.screen = pygame.display.set_mode((window_x, window_y))
+        self.image = None
+        self.imageRect = None
+        self.set_turtle_image(pygame.image.load("turtle.png"))
 
-    def hideTurtle(self):
-        self.isVisible = False
+    def hide_turtle(self):
+        self.is_visible = False
 
-    def showTurtle(self):
-        self.isVisible = True
+    def show_turtle(self):
+        self.is_visible = True
 
-    def penUp(self):
-        self.isPenUp = True
+    def pen_up(self):
+        self.is_pen_up = True
 
-    def penDown(self):
-        self.isPenUp = False
+    def pen_down(self):
+        self.is_pen_up = False
 
-    def setPenColor(self, red, green, blue):
-        # print red + green + blue
-        self.penColor = (red, green, blue)
+    def draw(self):
+        self.screen.fill(background_color)
+        if self.is_visible:
+            self.screen.blit(self.image, self.imageRect)
+        if self.point_start is not None:
+            for px, py, pc in zip(self.point_start, self.point_end, self.line_color):
+                pygame.draw.line(self.screen, pc, px, py, 2)
 
-    def draw(self, screen):
-        if self.isVisible:
-            screen.blit(self.image, self.imageRect)
-        if self.pointStart is not None:
-            for px, py, pc in zip(self.pointStart, self.pointEnd, self.lineColor):
-                pygame.draw.line(screen, pc, px, py, 2)
+    def set_turtle_image(self, image):
 
-    def setImage(self, image):
         self.image = image
-        self.imageSave = self.image
         self.imageRect = image.get_rect()
         self.imageRect = self.imageRect.move([self.x, self.y])
         self.x = self.imageRect.centerx
@@ -57,42 +54,32 @@ class Turtle:
 
     def rotate(self, angle):
         self.angle += angle
-        self.angleRad = math.radians(self.angle)
-        self.image = rot_center(self.imageSave, self.image, self.angle)
+        self.angle_radians = math.radians(self.angle)
 
-    def mvForward(self, distance, screen):
-        if self.isPenUp == False:
-            self.pointStart.append((self.x, self.y))
-            self.lineColor.append(self.penColor)
+    def mv_forward(self, distance):
+
+        if self.is_pen_up is False:
+            self.point_start.append((self.x, self.y))
+            self.line_color.append((0, 0, 0))
 
         self.imageRect = self.imageRect.move(
-            [int(distance * math.cos(self.angleRad)), int(-distance * math.sin(self.angleRad))])
+            [int(distance * math.cos(self.angle_radians)), int(-distance * math.sin(self.angle_radians))])
         self.x = self.imageRect.centerx
         self.y = self.imageRect.centery
 
-        if self.isPenUp == False:
-            self.pointEnd.append((self.x, self.y))
+        if self.is_pen_up is False:
+            self.point_end.append((self.x, self.y))
 
-    # print self.imageRect
-    def mvBackward(self, distance, screen):
-        if self.isPenUp == False:
-            self.pointStart.append((self.x, self.y))
-            self.lineColor.append(self.penColor)
+    def move_backward(self, distance):
+
+        if self.is_pen_up is False:
+            self.point_start.append((self.x, self.y))
+            self.line_color.append((0, 0, 0))
 
         self.imageRect = self.imageRect.move(
-            [-int(distance * math.cos(self.angleRad)), int(distance * math.sin(self.angleRad))])
+            [-int(distance * math.cos(self.angle_radians)), int(distance * math.sin(self.angle_radians))])
         self.x = self.imageRect.centerx
         self.y = self.imageRect.centery
 
-        if self.isPenUp == False:
-            self.pointEnd.append((self.x, self.y))
-
-
-def rot_center(orig_image, image, angle):
-    """rotate an image while keeping its center and size"""
-    orig_rect = image.get_rect()
-    rot_image = pygame.transform.rotate(orig_image, angle)
-    rot_rect = orig_rect.copy()
-    rot_rect.center = rot_image.get_rect().center
-    rot_image = rot_image.subsurface(rot_rect).copy()
-    return rot_image
+        if self.is_pen_up is False:
+            self.point_end.append((self.x, self.y))
