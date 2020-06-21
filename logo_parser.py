@@ -2,7 +2,7 @@ import pygame
 import sys
 
 from logo_keywords import Keyword
-from type_creator import TypeCreator
+from scanner import Scanner
 from turtle import Turtle
 
 
@@ -21,8 +21,8 @@ class LogoParser:
         self.init_parser()
 
     def fill_list(self, user_input):
-        type_creator = TypeCreator(user_input)
-        logo_char = type_creator.get_logo_char()
+        scanner = Scanner(user_input)
+        logo_char = scanner.get_logo_char()
         received_end = False
         while not received_end:
             if logo_char is not None:
@@ -30,7 +30,7 @@ class LogoParser:
                 if logo_char["type"] == 'END':
                     received_end = True
             if not received_end:
-                logo_char = type_creator.get_logo_char()
+                logo_char = scanner.get_logo_char()
 
     def check_next_token(self):
         if self.index + 1 < len(self.token_list):
